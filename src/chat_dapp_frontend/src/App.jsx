@@ -47,7 +47,7 @@ function App() {
 
   const searchUser = async () => {
     if (searchInput) {
-      let res = await actor.searchResults(searchInput);
+      let res = await actor.searchUser(searchInput);
       setSearchResults(res);
     }
   };

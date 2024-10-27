@@ -1,8 +1,10 @@
 import Principal "mo:base/Principal";
 import Text "mo:base/Text";
 import Array "mo:base/Array";
+import Debug "mo:base/Debug";
 
 actor {
+
   stable var userPrincipalList : [Text] = [];
 
   public shared (msg) func savePID() : async () {
@@ -15,4 +17,12 @@ actor {
       return;
     };
   };
+
+  public query func searchUser(input : Text) : async ?Text {
+    let res = Array.find<Text>(userPrincipalList, func (userPrincipal : Text) : Bool {
+      userPrincipal == input;
+    });
+    return res;
+  };
+
 };
