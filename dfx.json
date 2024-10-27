@@ -1,0 +1,37 @@
+{
+  "canisters": {
+    "chat_dapp_backend": {
+      "main": "src/chat_dapp_backend/main.mo",
+      "type": "motoko"
+    },
+    "chat_dapp_frontend": {
+      "dependencies": [
+        "chat_dapp_backend"
+      ],
+      "source": [
+        "src/chat_dapp_frontend/dist"
+      ],
+      "type": "assets",
+      "workspace": "chat_dapp_frontend"
+    },
+    "internet_identity": {
+      "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",
+      "frontend": {},
+      "remote": {
+        "id": {
+          "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
+        }
+      },
+      "type": "custom",
+      "wasm": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz"
+    }
+  },
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": ""
+    }
+  },
+  "output_env_file": ".env",
+  "version": 1
+}
