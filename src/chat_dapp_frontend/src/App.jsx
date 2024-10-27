@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { createActor, chat_dapp_backend } from "declarations/chat_dapp_backend";
 import { AuthClient } from "@dfinity/auth-client";
 import { HttpAgent } from "@dfinity/agent";
@@ -7,6 +7,9 @@ function App() {
   const [actor, setActor] = useState(chat_dapp_backend);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [greeting, setGreeting] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [searchResults, setSearchResults] = useState("");
+  const [typingTimeout, setTypingTimeout] = useState(null);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -25,7 +28,7 @@ function App() {
         process.env.CANISTER_ID_CHAT_DAPP_BACKEND,
         { agent }
       );
-      const response = await authenticatedActor.savePID();
+      await authenticatedActor.savePID();
       const pId = identity.getPrincipal().toText();
       setIsAuthenticated(true);
       setActor(authenticatedActor);
@@ -42,6 +45,23 @@ function App() {
     setGreeting("");
   };
 
+  const searchUser = async () => {
+    if (searchInput) {
+      let res = await actor.searchResults(searchInput);
+      setSearchResults(res);
+    }
+  };
+
+  // Debounce effect: waits for 2 seconds after the user stops typing to trigger search
+  useEffect(() => {
+    if (typingTimeout) clearTimeout(typingTimeout);
+    const timeoutId = setTimeout(() => {
+      searchUser();
+    }, 2000);
+    setTypingTimeout(timeoutId);
+    return () => clearTimeout(timeoutId);
+  }, [searchInput]);
+
   return (
     <main>
       <img src="/logo2.svg" alt="DFINITY logo" />
@@ -55,6 +75,18 @@ function App() {
         <div>
           <button onClick={handleLogout}>Logout</button>
           <section id="greeting">{greeting}</section>
+          <input
+            type="text"
+            placeholder="Search user"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+          />
+          {searchResults && (
+            <div>
+              <h3>Search Results:</h3>
+              <p>{searchResults}</p>
+            </div>
+          )}
         </div>
       )}
     </main>

@@ -3,13 +3,13 @@ import Text "mo:base/Text";
 import Array "mo:base/Array";
 
 actor {
-  stable var upList : [Text] = [];
+  stable var userPrincipalList : [Text] = [];
 
   public shared (msg) func savePID() : async () {
     let upID = Principal.toText(msg.caller);
-    let exists = Array.find<Text>(upList, func(p : Text) : Bool { p == upID }) != null;
+    let exists = Array.find<Text>(userPrincipalList, func(p : Text) : Bool { p == upID }) != null;
     if (not exists) {
-      upList := Array.append(upList, [upID]);
+      userPrincipalList := Array.append(userPrincipalList, [upID]);
       return;
     } else {
       return;
