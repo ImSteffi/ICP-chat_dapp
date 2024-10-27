@@ -2,6 +2,7 @@ import Principal "mo:base/Principal";
 import Text "mo:base/Text";
 import Array "mo:base/Array";
 import Debug "mo:base/Debug";
+import IC "mo:base/ExperimentalInternetComputer";
 
 actor {
 
@@ -19,9 +20,18 @@ actor {
   };
 
   public query func searchUser(input : Text) : async ?Text {
-    let res = Array.find<Text>(userPrincipalList, func (userPrincipal : Text) : Bool {
-      userPrincipal == input;
-    });
+    var res : ?Text = null;
+    let instructionsUsed = IC.countInstructions(
+      func() {
+        res := Array.find<Text>(
+          userPrincipalList,
+          func(userPrincipal : Text) : Bool {
+            userPrincipal == input;
+          },
+        );
+      }
+    );
+    Debug.print("cycles used: " # debug_show(instructionsUsed));
     return res;
   };
 
