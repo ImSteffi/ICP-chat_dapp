@@ -11,6 +11,25 @@ function App() {
   const [searchResults, setSearchResults] = useState("");
   const [typingTimeout, setTypingTimeout] = useState(null);
 
+  useEffect(() => {
+    const checkAuth = async () => {
+      const authClient = await AuthClient.create();
+      if (await authClient.isAuthenticated()) {
+        const identity = authClient.getIdentity();
+        const agent = new HttpAgent({ identity });
+        const authenticatedActor = createActor(
+          process.env.CANISTER_ID_CHAT_DAPP_BACKEND,
+          { agent }
+        );
+        const pId = identity.getPrincipal().toText();
+        setIsAuthenticated(true);
+        setActor(authenticatedActor);
+        setGreeting(`Welcome back, ${pId}`);
+      }
+    };
+    checkAuth();
+  }, []);
+
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
@@ -32,7 +51,7 @@ function App() {
       const pId = identity.getPrincipal().toText();
       setIsAuthenticated(true);
       setActor(authenticatedActor);
-      setGreeting(`Hello ____ ${pId}`);
+      setGreeting(`Hello, ${pId}`);
     } catch (error) {
       console.error("Login failed:", error);
     }
