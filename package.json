@@ -14,5 +14,8 @@
   "type": "module",
   "workspaces": [
     "src/chat_dapp_frontend"
-  ]
+  ],
+  "dependencies": {
+    "@dfinity/auth-client": "^2.1.3"
+  }
 }
