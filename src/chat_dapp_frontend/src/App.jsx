@@ -6,10 +6,14 @@ import { HttpAgent } from "@dfinity/agent";
 function App() {
   const [actor, setActor] = useState(chat_dapp_backend);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [activeUser, setActiveUser] = useState("");
   const [greeting, setGreeting] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [searchResults, setSearchResults] = useState("");
   const [typingTimeout, setTypingTimeout] = useState(null);
+  const [displayChat, setDisplayChat] = useState(false);
+  const [messageInput, setMessageInput] = useState("");
+  const [chatHistory, setChatHistory] = useState([]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -21,14 +25,24 @@ function App() {
           process.env.CANISTER_ID_CHAT_DAPP_BACKEND,
           { agent }
         );
-        const pId = identity.getPrincipal().toText();
+        const pID = identity.getPrincipal().toText();
         setIsAuthenticated(true);
         setActor(authenticatedActor);
-        setGreeting(`Welcome back, ${pId}`);
+        setActiveUser(pID);
+        setGreeting(`Welcome back, ${pID}`);
       }
     };
     checkAuth();
   }, []);
+
+  useEffect(() => {
+    if (typingTimeout) clearTimeout(typingTimeout);
+    const timeoutId = setTimeout(() => {
+      searchUser();
+    }, 2000);
+    setTypingTimeout(timeoutId);
+    return () => clearTimeout(timeoutId);
+  }, [searchInput]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -48,10 +62,11 @@ function App() {
         { agent }
       );
       await authenticatedActor.savePID();
-      const pId = identity.getPrincipal().toText();
+      const pID = identity.getPrincipal().toText();
       setIsAuthenticated(true);
       setActor(authenticatedActor);
-      setGreeting(`Hello, ${pId}`);
+      setActiveUser(pID);
+      setGreeting(`Hello, ${pID}`);
     } catch (error) {
       console.error("Login failed:", error);
     }
@@ -62,24 +77,38 @@ function App() {
     await authClient.logout();
     setIsAuthenticated(false);
     setGreeting("");
+    setSearchResults("");
   };
 
   const searchUser = async () => {
     if (searchInput) {
       let res = await actor.searchUser(searchInput);
-      setSearchResults(res);
+      if (res.length === 0) {
+        setSearchResults("No such user");
+      } else {
+        setSearchResults(res);
+      }
     }
   };
 
-  // Debounce effect: waits for 2 seconds after the user stops typing to trigger search
-  useEffect(() => {
-    if (typingTimeout) clearTimeout(typingTimeout);
-    const timeoutId = setTimeout(() => {
-      searchUser();
-    }, 2000);
-    setTypingTimeout(timeoutId);
-    return () => clearTimeout(timeoutId);
-  }, [searchInput]);
+  const openChat = (value) => {
+    setSearchResults("");
+    if (activeUser && value) {
+      setDisplayChat(true);
+    }
+  };
+
+  const sendMessage = async (e) => {
+    e.preventDefault();
+    if (messageInput.trim() === "") return;
+    try {
+      let res = await actor.sendChat(messageInput);
+      setChatHistory(res);
+      setMessageInput("");
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   return (
     <main>
@@ -103,9 +132,39 @@ function App() {
           {searchResults && (
             <div>
               <h3>Search Results:</h3>
-              <p>{searchResults}</p>
+              {searchResults === "No such user" ? (
+                <h3>No such user</h3>
+              ) : (
+                <button onClick={() => openChat(searchResults)}>
+                  {searchResults}
+                </button>
+              )}
             </div>
           )}
+          {displayChat ? (
+            <div>
+              <div>
+                <div>MESSAGES</div>
+                <div>
+                  {chatHistory.map((msg, index) => (
+                    <div key={index}>
+                      <strong>{msg.addresser}: </strong>
+                      <span>{msg.message}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <form onSubmit={sendMessage}>
+                <input
+                  type="text"
+                  placeholder="Your message..."
+                  value={messageInput}
+                  onChange={(e) => setMessageInput(e.target.value)}
+                />
+                <button type="submit">&rarr;</button>
+              </form>
+            </div>
+          ) : null}
         </div>
       )}
     </main>
