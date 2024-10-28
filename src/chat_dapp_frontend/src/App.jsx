@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { createActor, chat_dapp_backend } from "declarations/chat_dapp_backend";
 import { AuthClient } from "@dfinity/auth-client";
 import { HttpAgent } from "@dfinity/agent";
+import { Principal } from '@dfinity/principal';
+
 
 function App() {
   const [actor, setActor] = useState(chat_dapp_backend);
@@ -12,8 +14,11 @@ function App() {
   const [searchResults, setSearchResults] = useState("");
   const [typingTimeout, setTypingTimeout] = useState(null);
   const [displayChat, setDisplayChat] = useState(false);
+  const [receiver, setReceiver] = useState("");
   const [messageInput, setMessageInput] = useState("");
   const [chatHistory, setChatHistory] = useState([]);
+
+  const [getRes, setGetRes] = useState([]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -94,15 +99,23 @@ function App() {
   const openChat = (value) => {
     setSearchResults("");
     if (activeUser && value) {
+      setReceiver(value[0]);
       setDisplayChat(true);
     }
+  };
+
+  const get = async () => {
+    let res = await actor.get();
+    setGetRes(res);
   };
 
   const sendMessage = async (e) => {
     e.preventDefault();
     if (messageInput.trim() === "") return;
     try {
-      let res = await actor.sendChat(messageInput);
+      let receiverPrincipal = Principal.fromText(receiver);
+      let res = await actor.sendChat(messageInput, receiverPrincipal);
+      console.log(res);
       setChatHistory(res);
       setMessageInput("");
     } catch (error) {
@@ -113,6 +126,18 @@ function App() {
   return (
     <main>
       <img src="/logo2.svg" alt="DFINITY logo" />
+
+      <div>
+        <button onClick={get}>Get</button>
+        <div>
+          {getRes.length > 0 ? (
+            getRes.map((item, index) => <p key={index}>{item}</p>)
+          ) : (
+            <p>No users found</p>
+          )}
+        </div>
+      </div>
+
       <br />
       <br />
       {!isAuthenticated ? (
