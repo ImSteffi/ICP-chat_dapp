@@ -2,8 +2,7 @@ import React, { useState, useEffect } from "react";
 import { createActor, chat_dapp_backend } from "declarations/chat_dapp_backend";
 import { AuthClient } from "@dfinity/auth-client";
 import { HttpAgent } from "@dfinity/agent";
-import { Principal } from '@dfinity/principal';
-
+import { Principal } from "@dfinity/principal";
 
 function App() {
   const [actor, setActor] = useState(chat_dapp_backend);
@@ -96,10 +95,19 @@ function App() {
     }
   };
 
-  const openChat = (value) => {
+  const openChat = async (value) => {
     setSearchResults("");
     if (activeUser && value) {
-      setReceiver(value[0]);
+      let receiver = value[0];
+      setReceiver(receiver);
+      let activeUserPrincipal = Principal.fromText(activeUser);
+      let receiverPrincipal = Principal.fromText(receiver);
+      let res = await actor.getChatHistory(
+        activeUserPrincipal,
+        receiverPrincipal
+      );
+      const messages = res.map((msg) => msg.content);
+      setChatHistory(messages);
       setDisplayChat(true);
     }
   };
@@ -115,8 +123,8 @@ function App() {
     try {
       let receiverPrincipal = Principal.fromText(receiver);
       let res = await actor.sendChat(messageInput, receiverPrincipal);
-      console.log(res);
-      setChatHistory(res);
+      const messages = res.map((msg) => msg.content);
+      setChatHistory(messages);
       setMessageInput("");
     } catch (error) {
       console.error(error);
@@ -126,18 +134,14 @@ function App() {
   return (
     <main>
       <img src="/logo2.svg" alt="DFINITY logo" />
-
       <div>
         <button onClick={get}>Get</button>
         <div>
-          {getRes.length > 0 ? (
-            getRes.map((item, index) => <p key={index}>{item}</p>)
-          ) : (
-            <p>No users found</p>
-          )}
+          {getRes.length > 0
+            ? getRes.map((item, index) => <p key={index}>{item}</p>)
+            : null}
         </div>
       </div>
-
       <br />
       <br />
       {!isAuthenticated ? (
@@ -173,8 +177,7 @@ function App() {
                 <div>
                   {chatHistory.map((msg, index) => (
                     <div key={index}>
-                      <strong>{msg.addresser}: </strong>
-                      <span>{msg.message}</span>
+                      <strong>{msg}</strong>
                     </div>
                   ))}
                 </div>
