@@ -1,37 +1,218 @@
-body {
-  font-family: sans-serif;
-  font-size: 1.5rem;
+$background-color: #000;
+$text-color: #00ff00;
+$border-color: #0f0;
+$font-family: 'Courier New', Courier, monospace;
+$transition: all 0.3s ease;
+$btn-padding: 10px;
+$border-radius: 5px;
+
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background-color: $background-color;
+  color: $text-color;
+  font-family: $font-family;
+  overflow: hidden;
 }
 
-img {
-  max-width: 50vw;
-  max-height: 25vw;
-  display: block;
-  margin: auto;
-}
-
-form {
+.app-container {
   display: flex;
-  justify-content: center;
-  gap: 0.5em;
-  flex-flow: row wrap;
-  max-width: 40vw;
-  margin: auto;
-  align-items: baseline;
+  flex-direction: column;
+  height: 100vh;
 }
 
-button[type="submit"] {
-  padding: 5px 20px;
-  margin: 10px auto;
-  float: right;
+.top-section {
+  flex-shrink: 0;
+  padding: 10px;
+  border-bottom: 1px solid $border-color;
+  text-align: center;
 }
 
-#greeting {
-  margin: 10px auto;
-  padding: 10px 60px;
-  border: 1px solid #222;
+.logo {
+  width: 300px;
+  margin-bottom: 10px;
 }
 
-#greeting:empty {
-  display: none;
+.get-section {
+  margin-top: 10px;
+  text-align: center;
+}
+
+.get-btn, .close-btn {
+  background-color: $background-color;
+  color: $text-color;
+  border: 1px solid $border-color;
+  padding: $btn-padding;
+  margin: 5px;
+  cursor: pointer;
+  border-radius: $border-radius;
+  font-family: $font-family;
+  transition: $transition;
+
+  &:hover {
+    background-color: $border-color;
+    color: $background-color;
+  }
+}
+
+.get-list {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: $background-color;
+  border-radius: $border-radius;
+  border: 1px solid $border-color;
+  max-height: 100px;
+  overflow-y: auto;
+}
+
+.get-item {
+  color: $text-color;
+  margin: 5px 0;
+  font-size: 1rem;
+}
+
+.auth-section {
+  margin-top: 10px;
+  text-align: center;
+}
+
+.login-btn, .logout-btn {
+  background-color: $background-color;
+  color: $text-color;
+  border: 1px solid $border-color;
+  padding: $btn-padding 20px;
+  margin-top: 10px;
+  cursor: pointer;
+  border-radius: $border-radius;
+  font-family: $font-family;
+  transition: $transition;
+
+  &:hover {
+    background-color: $border-color;
+    color: $background-color;
+  }
+}
+
+.greeting {
+  margin-top: 10px;
+  font-size: 1.2em;
+  color: $text-color;
+}
+
+.search-input {
+  margin-top: 10px;
+  background-color: $background-color;
+  color: $text-color;
+  border: 1px solid $border-color;
+  border-radius: $border-radius;
+  padding: 10px;
+  width: 80%;
+  transition: $transition;
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 10px $border-color;
+  }
+}
+
+.search-results {
+  margin-top: 10px;
+}
+
+.search-result-btn {
+  background-color: $background-color;
+  color: $text-color;
+  border: 1px solid $border-color;
+  padding: $btn-padding;
+  margin-top: 5px;
+  cursor: pointer;
+  border-radius: $border-radius;
+  font-family: $font-family;
+  transition: $transition;
+
+  &:hover {
+    background-color: $border-color;
+    color: $background-color;
+  }
+}
+
+.chat-container {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 10px;
+  background-color: $background-color;
+  border-top: 1px solid $border-color;
+  overflow: hidden;
+}
+
+.chat-history {
+  flex-grow: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-right: 5px;
+}
+
+.chat-message {
+  padding: 10px;
+  border-radius: $border-radius;
+  max-width: 70%;
+  word-wrap: break-word;
+}
+
+.sent-message {
+  align-self: flex-end;
+  background-color: $border-color;
+  color: $background-color;
+  text-align: right;
+  box-shadow: 0 0 10px $border-color;
+}
+
+.received-message {
+  align-self: flex-start;
+  background-color: $background-color;
+  color: $text-color;
+  border: 1px solid $border-color;
+  text-align: left;
+}
+
+.message-form {
+  display: flex;
+  padding-top: 10px;
+}
+
+.message-input {
+  flex-grow: 1;
+  padding: 10px;
+  border: 1px solid $border-color;
+  border-radius: $border-radius;
+  background-color: $background-color;
+  color: $text-color;
+  font-family: $font-family;
+  transition: $transition;
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 10px $border-color;
+  }
+}
+
+.send-btn {
+  margin-left: 10px;
+  padding: $btn-padding;
+  background-color: $background-color;
+  color: $text-color;
+  border: 1px solid $border-color;
+  border-radius: $border-radius;
+  cursor: pointer;
+  transition: $transition;
+
+  &:hover {
+    background-color: $border-color;
+    color: $background-color;
+  }
 }

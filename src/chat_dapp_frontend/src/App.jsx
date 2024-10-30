@@ -1,23 +1,35 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { createActor, chat_dapp_backend } from "declarations/chat_dapp_backend";
 import { AuthClient } from "@dfinity/auth-client";
 import { HttpAgent } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 
 function App() {
-  const [actor, setActor] = useState(chat_dapp_backend);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [activeUser, setActiveUser] = useState("");
-  const [greeting, setGreeting] = useState("");
-  const [searchInput, setSearchInput] = useState("");
-  const [searchResults, setSearchResults] = useState("");
-  const [typingTimeout, setTypingTimeout] = useState(null);
-  const [displayChat, setDisplayChat] = useState(false);
-  const [receiver, setReceiver] = useState("");
-  const [messageInput, setMessageInput] = useState("");
-  const [chatHistory, setChatHistory] = useState([]);
+  const [actor, setActor] = useState(chat_dapp_backend); // actor that talks to the backend
+  const [isAuthenticated, setIsAuthenticated] = useState(false); // authenticator
+  const [activeUser, setActiveUser] = useState(""); // user that is logged in
+  const [greeting, setGreeting] = useState(""); // greeter
+  const [searchInput, setSearchInput] = useState(""); // search input
+  const [searchResults, setSearchResults] = useState(""); // search results
+  const [typingTimeout, setTypingTimeout] = useState(null); // timer for search
+  const [displayChat, setDisplayChat] = useState(false); // chat enabler
+  const [chatHistory, setChatHistory] = useState([]); // chat history
+  const [receiver, setReceiver] = useState(""); // end user that receives msg's
+  const [messageInput, setMessageInput] = useState(""); // message input
+  const [getRes, setGetRes] = useState([]); // list of users
+  const [isSending, setIsSending] = useState(false); // track sending state
 
-  const [getRes, setGetRes] = useState([]);
+  const chatHistoryRef = useRef(null);
+
+  const scrollToBottom = () => {
+    if (chatHistoryRef.current) {
+      chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight;
+    }
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [chatHistory]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -48,6 +60,20 @@ function App() {
     return () => clearTimeout(timeoutId);
   }, [searchInput]);
 
+  const resetStates = async () => {
+    const authClient = await AuthClient.create();
+    await authClient.logout();
+    setIsAuthenticated(false);
+    setActiveUser("");
+    setGreeting("");
+    setSearchInput("");
+    setSearchResults("");
+    setDisplayChat(false);
+    setChatHistory([]);
+    setReceiver("");
+    setMessageInput("");
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
@@ -76,14 +102,6 @@ function App() {
     }
   };
 
-  const handleLogout = async () => {
-    const authClient = await AuthClient.create();
-    await authClient.logout();
-    setIsAuthenticated(false);
-    setGreeting("");
-    setSearchResults("");
-  };
-
   const searchUser = async () => {
     if (searchInput) {
       let res = await actor.searchUser(searchInput);
@@ -106,9 +124,24 @@ function App() {
         activeUserPrincipal,
         receiverPrincipal
       );
-      const messages = res.map((msg) => msg.content);
-      setChatHistory(messages);
+      setChatHistory(res);
       setDisplayChat(true);
+    }
+  };
+
+  const sendMessage = async (e) => {
+    e.preventDefault();
+    if (isSending || messageInput.trim() === "") return;
+    setIsSending(true);
+    try {
+      let receiverPrincipal = Principal.fromText(receiver);
+      let res = await actor.sendChat(messageInput, receiverPrincipal);
+      setChatHistory(res);
+      setMessageInput("");
+    } catch (error) {
+      console.error("Failed to send message:", error);
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -117,82 +150,105 @@ function App() {
     setGetRes(res);
   };
 
-  const sendMessage = async (e) => {
-    e.preventDefault();
-    if (messageInput.trim() === "") return;
-    try {
-      let receiverPrincipal = Principal.fromText(receiver);
-      let res = await actor.sendChat(messageInput, receiverPrincipal);
-      const messages = res.map((msg) => msg.content);
-      setChatHistory(messages);
-      setMessageInput("");
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
   return (
-    <main>
-      <img src="/logo2.svg" alt="DFINITY logo" />
-      <div>
-        <button onClick={get}>Get</button>
-        <div>
-          {getRes.length > 0
-            ? getRes.map((item, index) => <p key={index}>{item}</p>)
-            : null}
+    <main className="app-container">
+      <header className="top-section">
+        <img src="/logo2.svg" alt="DFINITY logo" className="logo" />
+
+        <div className="get-section">
+          {getRes.length > 0 ? (
+            <button onClick={() => setGetRes([])} className="close-btn">
+              Close List
+            </button>
+          ) : (
+            <button onClick={get} className="get-btn">
+              Get List
+            </button>
+          )}
+
+          {getRes.length > 0 && (
+            <div className="get-list">
+              {getRes.map((item, index) => (
+                <p key={index} className="get-item">
+                  {item}
+                </p>
+              ))}
+            </div>
+          )}
         </div>
-      </div>
-      <br />
-      <br />
-      {!isAuthenticated ? (
-        <form onSubmit={handleLogin}>
-          <button type="submit">Login</button>
-        </form>
-      ) : (
-        <div>
-          <button onClick={handleLogout}>Logout</button>
-          <section id="greeting">{greeting}</section>
-          <input
-            type="text"
-            placeholder="Search user"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-          />
-          {searchResults && (
-            <div>
-              <h3>Search Results:</h3>
-              {searchResults === "No such user" ? (
-                <h3>No such user</h3>
-              ) : (
-                <button onClick={() => openChat(searchResults)}>
-                  {searchResults}
-                </button>
+
+        <div className="auth-section">
+          {!isAuthenticated ? (
+            <form onSubmit={handleLogin} className="login-form">
+              <button type="submit" className="login-btn">
+                Login
+              </button>
+            </form>
+          ) : (
+            <div className="user-interface">
+              <button onClick={resetStates} className="logout-btn">
+                Logout
+              </button>
+              <section id="greeting" className="greeting">
+                {greeting}
+              </section>
+
+              <input
+                type="text"
+                placeholder="Search user"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                className="search-input"
+              />
+
+              {searchResults && (
+                <div className="search-results">
+                  {searchResults === "No such user" ? (
+                    <h3>No such user</h3>
+                  ) : (
+                    <button
+                      onClick={() => openChat(searchResults)}
+                      className="search-result-btn"
+                    >
+                      {searchResults}
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           )}
-          {displayChat ? (
-            <div>
-              <div>
-                <div>MESSAGES</div>
-                <div>
-                  {chatHistory.map((msg, index) => (
-                    <div key={index}>
-                      <strong>{msg}</strong>
-                    </div>
-                  ))}
-                </div>
+        </div>
+      </header>
+
+      {displayChat && (
+        <div className="chat-container">
+          <div className="chat-history" ref={chatHistoryRef}>
+            {chatHistory.map((msg, index) => (
+              <div
+                key={index}
+                className={`chat-message ${
+                  msg.from?.toText() === activeUser
+                    ? "sent-message"
+                    : "received-message"
+                }`}
+              >
+                <strong>{msg.content}</strong>
               </div>
-              <form onSubmit={sendMessage}>
-                <input
-                  type="text"
-                  placeholder="Your message..."
-                  value={messageInput}
-                  onChange={(e) => setMessageInput(e.target.value)}
-                />
-                <button type="submit">&rarr;</button>
-              </form>
-            </div>
-          ) : null}
+            ))}
+          </div>
+
+          <form onSubmit={sendMessage} className="message-form">
+            <input
+              type="text"
+              placeholder="Your message..."
+              value={messageInput}
+              onChange={(e) => setMessageInput(e.target.value)}
+              className="message-input"
+            />
+            <button type="submit" className="send-btn" disabled={isSending}>
+              &rarr;
+            </button>
+          </form>
         </div>
       )}
     </main>
